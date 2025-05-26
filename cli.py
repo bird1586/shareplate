@@ -1,90 +1,103 @@
 import streamlit as st
 import os
-from datetime import datetime
+import mimetypes # 用於猜測檔案的MIME類型，讓下載更精確
 
-# 定義檔案儲存的路徑
-# 在 Streamlit Cloud 上，'/app/your_repo_name/uploaded_files' 是一個可寫的路徑
-# 建議使用相對於腳本的路徑，並確保該目錄存在
-UPLOAD_DIR = "uploaded_files"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+# 定義內容暫存區的路徑
+# 確保這個目錄存在
+CONTENT_STORE_DIR = "temporary_holdings"
+if not os.path.exists(CONTENT_STORE_DIR):
+    os.makedirs(CONTENT_STORE_DIR)
 
-# --- Helper Functions ---
-def save_uploaded_file_locally(uploaded_file):
-    """將上傳的檔案儲存到本地並返回其路徑"""
-    file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
+# --- 內部程序 (非公開展示) ---
+def receive_material_locally(input_file):
+    """將傳入的資料儲存到暫存區並返回其路徑"""
+    file_path = os.path.join(CONTENT_STORE_DIR, input_file.name)
 
-    # 檢查檔案是否已存在，避免覆蓋
+    # 檢查檔案是否已存在，避免覆蓋（提供警告）
     if os.path.exists(file_path):
-        st.warning(f"檔案 '{uploaded_file.name}' 已存在，將會覆蓋舊檔案。")
+        st.warning(f"偵測到重複命名：'{input_file.name}' 已存在。將會覆寫現有內容。")
 
     try:
         with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+            f.write(input_file.getbuffer())
         return file_path
     except Exception as e:
-        st.error(f"檔案儲存失敗: {e}")
+        st.error(f"資料接收處理失敗: {e}")
         return None
 
-def delete_local_file(file_path):
-    """從本地刪除檔案"""
+def clear_processed_material(file_path):
+    """從暫存區移除已處理的資料"""
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
-            st.success(f"檔案已從本地刪除: {os.path.basename(file_path)}")
+            st.success(f"已從暫存區清除：{os.path.basename(file_path)}")
         else:
-            st.warning(f"嘗試刪除檔案但未找到: {os.path.basename(file_path)}")
+            st.warning(f"嘗試清除資料但未找到：{os.path.basename(file_path)}")
     except Exception as e:
-        st.error(f"刪除檔案失敗: {e}")
+        st.error(f"資料清除作業失敗: {e}")
 
-# --- Streamlit UI ---
-st.title("簡易檔案上傳與下載平台")
+# --- 介面呈現 ---
+st.title("高效內容傳遞服務")
 
-st.header("上傳檔案")
-uploaded_file = st.file_uploader("選擇一個檔案上傳", type=None) # type=None 允許所有檔案類型
+st.markdown("""
+歡迎使用高效內容傳遞服務。本平台致力於提供流暢、安全的數位內容處理體驗。
+請透過下方介面提交您的材料，或檢索之前儲存的項目。
+""")
 
-if uploaded_file is not None:
-    st.info("檔案上傳中...")
-    file_path = save_uploaded_file_locally(uploaded_file)
-    if file_path:
-        st.success(f"檔案 **`{uploaded_file.name}`** 已成功上傳！")
-        st.warning("請注意：此服務是基於本地儲存。**當應用程式重啟時（例如，使用者訪問、Streamlit Cloud自動重啟），您上傳的檔案將會丟失。**")
+---
 
+st.header("提交新材料")
+input_material = st.file_uploader("請選擇要提交的材料", type=None, help="系統將接收您的選定內容以供後續處理。")
 
-st.header("下載檔案")
-download_filename = st.text_input("請輸入要下載的檔案名稱 (含副檔名)")
+if input_material is not None:
+    st.info("材料處理中...")
+    material_path = receive_material_locally(input_material)
+    if material_path:
+        st.success(f"材料 **`{input_material.name}`** 已成功納入處理流程。")
+        st.warning("提醒：本系統的暫存區內容會定期更新與清理，為確保資料時效性，請在必要時儘速完成處理。")
 
-if st.button("下載並刪除檔案"):
-    if download_filename:
-        file_path_to_download = os.path.join(UPLOAD_DIR, download_filename)
+---
 
-        if os.path.exists(file_path_to_download):
-            with open(file_path_to_download, "rb") as f:
-                file_content = f.read()
+st.header("檢索與輸出材料")
+target_material_name = st.text_input("請輸入要檢索的材料名稱 (含完整識別符號)", help="例如：document.pdf, image.png")
+
+if st.button("檢索並輸出此材料"):
+    if target_material_name:
+        material_path_to_retrieve = os.path.join(CONTENT_STORE_DIR, target_material_name)
+
+        if os.path.exists(material_path_to_retrieve):
+            with open(material_path_to_retrieve, "rb") as f:
+                material_content = f.read()
+
+            # 嘗試猜測MIME類型
+            mime_type, _ = mimetypes.guess_type(material_path_to_retrieve)
+            if mime_type is None:
+                mime_type = "application/octet-stream" # 預設二進位流
 
             st.download_button(
-                label=f"點擊下載 '{download_filename}'",
-                data=file_content,
-                file_name=download_filename,
-                mime="application/octet-stream", # 根據實際檔案類型調整
-                key="download_button_key"
+                label=f"獲取 '{target_material_name}' 內容",
+                data=material_content,
+                file_name=target_material_name,
+                mime=mime_type,
+                key="retrieve_button_key"
             )
-            st.success("檔案準備下載。")
-            # 檔案下載按鈕生成後，立即嘗試刪除檔案
-            delete_local_file(file_path_to_download)
-            st.info("檔案下載連結已生成，下載完成後檔案將被刪除。")
+            st.success("材料已就緒，可進行獲取。")
+            # 材料獲取按鈕生成後，立即嘗試清除
+            clear_processed_material(material_path_to_retrieve)
+            st.info("請注意：材料獲取完成後，系統將自動清除其在暫存區的副本。")
         else:
-            st.error(f"找不到檔案 **`{download_filename}`**，請檢查檔案名稱是否正確。")
+            st.error(f"暫存區中未找到名稱為 **`{target_material_name}`** 的材料。請檢查識別符號是否正確。")
     else:
-        st.warning("請輸入檔案名稱。")
+        st.warning("請提供材料的完整識別符號以便檢索。")
 
+---
 
-# 檔案列表 (僅供參考)
+# 內部狀態概覽 (僅供系統管理員參考)
 
-st.subheader("伺服器上現有檔案列表 (應用程式重啟後會清空)")
-files_in_dir = os.listdir(UPLOAD_DIR)
-if files_in_dir:
-    for filename in files_in_dir:
+st.subheader("當前暫存區活動概覽 (定期刷新)")
+materials_in_dir = os.listdir(CONTENT_STORE_DIR)
+if materials_in_dir:
+    for filename in materials_in_dir:
         st.write(f"- `{filename}`")
 else:
-    st.info("目前沒有任何檔案在伺服器上。")
+    st.info("暫存區目前處於清空狀態。")
