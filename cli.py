@@ -37,16 +37,10 @@ def clear_processed_material(file_path):
         st.error(f"資料清除作業失敗: {e}")
 
 # --- 介面呈現 ---
-st.title("高效內容傳遞服務")
-
-st.markdown("""
-歡迎使用高效內容傳遞服務。本平台致力於提供流暢、安全的數位內容處理體驗。
-請透過下方介面提交您的材料，或檢索之前儲存的項目。
-""")
+st.title("測試介面")
 
 
-
-st.header("提交新材料")
+st.header("測試材料")
 input_material = st.file_uploader("請選擇要提交的材料", type=None, help="系統將接收您的選定內容以供後續處理。")
 
 if input_material is not None:
@@ -57,10 +51,10 @@ if input_material is not None:
         st.warning("提醒：本系統的暫存區內容會定期更新與清理，為確保資料時效性，請在必要時儘速完成處理。")
 
 
-st.header("檢索與輸出材料")
+st.header("檢索材料")
 target_material_name = st.text_input("請輸入要檢索的材料名稱 (含完整識別符號)", help="例如：document.pdf, image.png")
 
-if st.button("檢索並輸出此材料"):
+if st.button("檢索材料"):
     if target_material_name:
         material_path_to_retrieve = os.path.join(CONTENT_STORE_DIR, target_material_name)
 
@@ -89,13 +83,3 @@ if st.button("檢索並輸出此材料"):
     else:
         st.warning("請提供材料的完整識別符號以便檢索。")
 
-
-# 內部狀態概覽 (僅供系統管理員參考)
-
-st.subheader("當前暫存區活動概覽 (定期刷新)")
-materials_in_dir = os.listdir(CONTENT_STORE_DIR)
-if materials_in_dir:
-    for filename in materials_in_dir:
-        st.write(f"- `{filename}`")
-else:
-    st.info("暫存區目前處於清空狀態。")
