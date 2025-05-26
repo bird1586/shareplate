@@ -44,7 +44,7 @@ st.markdown("""
 請透過下方介面提交您的材料，或檢索之前儲存的項目。
 """)
 
----
+
 
 st.header("提交新材料")
 input_material = st.file_uploader("請選擇要提交的材料", type=None, help="系統將接收您的選定內容以供後續處理。")
@@ -56,7 +56,6 @@ if input_material is not None:
         st.success(f"材料 **`{input_material.name}`** 已成功納入處理流程。")
         st.warning("提醒：本系統的暫存區內容會定期更新與清理，為確保資料時效性，請在必要時儘速完成處理。")
 
----
 
 st.header("檢索與輸出材料")
 target_material_name = st.text_input("請輸入要檢索的材料名稱 (含完整識別符號)", help="例如：document.pdf, image.png")
@@ -90,7 +89,6 @@ if st.button("檢索並輸出此材料"):
     else:
         st.warning("請提供材料的完整識別符號以便檢索。")
 
----
 
 # 內部狀態概覽 (僅供系統管理員參考)
 
