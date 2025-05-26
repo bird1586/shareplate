@@ -50,7 +50,6 @@ if uploaded_file is not None:
         st.success(f"檔案 **`{uploaded_file.name}`** 已成功上傳！")
         st.warning("請注意：此服務是基於本地儲存。**當應用程式重啟時（例如，使用者訪問、Streamlit Cloud自動重啟），您上傳的檔案將會丟失。**")
 
----
 
 st.header("下載檔案")
 download_filename = st.text_input("請輸入要下載的檔案名稱 (含副檔名)")
