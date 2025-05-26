@@ -52,7 +52,7 @@ if input_material is not None:
 
 
 st.header("檢索材料")
-target_material_name = st.text_input("請輸入要檢索的材料名稱 (含完整識別符號)", help="例如：document.pdf, image.png")
+target_material_name = st.text_input("", help="例如：document.pdf, image.png")
 
 if st.button("檢索材料"):
     if target_material_name:
